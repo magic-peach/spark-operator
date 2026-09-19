@@ -23,11 +23,14 @@ import (
 )
 
 var _ = Describe("CreateValidMetricNameLabel", func() {
-	It("replaces dashes in both the prefix and the name", func() {
-		Expect(util.CreateValidMetricNameLabel("spark-app-", "my-job")).To(Equal("spark_app_my_job"))
-	})
-
-	It("returns the concatenation unchanged when there are no dashes", func() {
-		Expect(util.CreateValidMetricNameLabel("spark_app_", "myjob")).To(Equal("spark_app_myjob"))
-	})
+	DescribeTable("sanitizes prefix+name",
+		func(prefix, name, expected string) {
+			Expect(util.CreateValidMetricNameLabel(prefix, name)).To(Equal(expected))
+		},
+		Entry("replaces dashes in prefix and name", "spark-app-", "my-job", "spark_app_my_job"),
+		Entry("leaves dash-free input unchanged", "spark_app_", "myjob", "spark_app_myjob"),
+		Entry("empty prefix is the operator default", "", "spark-app-count", "spark_app_count"),
+		Entry("both empty", "", "", ""),
+		Entry("consecutive dashes", "", "a--b", "a__b"),
+	)
 })
